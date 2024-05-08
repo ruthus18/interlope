@@ -1,10 +1,16 @@
-#include <cstdlib>
 #include <iostream>
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
 using namespace std;
+
+
+// Terminal colors
+#define TERM_RED_BG   "\033[0;41m"
+#define TERM_CYAN_BG  "\033[0;104m"
+#define TERM_RESET    "\033[0;0m"
+// More: https://en.wikipedia.org/wiki/ANSI_escape_code#In_C
 
 
 GLuint program;
@@ -36,9 +42,9 @@ bool init_resources() {
     const char* f_shader_source = 
         "#version 120\n"
         "void main(void) {"
-        "    gl_FragColor[0] = 0.0;"
-        "    gl_FragColor[1] = 0.0;"
-        "    gl_FragColor[2] = 1.0;"
+        "    gl_FragColor[0] = gl_FragCoord.x/1920.0;"
+        "    gl_FragColor[1] = gl_FragCoord.y/1080.0;"
+        "    gl_FragColor[2] = 1;"
         "}";
 
     glShaderSource(f_shader, 1, &f_shader_source, NULL);
@@ -84,9 +90,12 @@ void render(SDL_Window* window) {
 
     // Describe mesh
     GLfloat triangle_vertices[] = {
-        0.0, 0.8,
-        -0.8, -0.8,
-        0.8, 0.8,
+        -0.5, 0.5,
+        -0.5, -0.5,
+        0.5, 0.5,
+        0.5, 0.5,
+        -0.5, -0.5,
+        0.5, -0.5
     };
     glVertexAttribPointer(
         attribute_coord2d,  // attribute
@@ -98,7 +107,7 @@ void render(SDL_Window* window) {
     );
     
     // Push each element in buffer_vertices to the vertex shader
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDisableVertexAttribArray(attribute_coord2d);
 
@@ -119,22 +128,34 @@ void main_loop(SDL_Window* window) {
 }
 
 
+void print_err(const string& msg) {
+    cerr << TERM_RED_BG << "[!] " <<  msg << TERM_RESET << endl;
+}
+
+
 int main(int argc, char* argv[]) {
+    // Logs init
+    cout
+        << TERM_CYAN_BG
+        << "------ Interlope Engine ------"
+        << TERM_RESET << endl;
+
     // SDL init
     SDL_Init(SDL_INIT_VIDEO); 
 
     SDL_Window* window = SDL_CreateWindow(
-        "Triangle",
+        "Interlope",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         1920, 1080,
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
     );
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    cout << "SDL Initialized" << endl;
 
     // Extension wrangler init
     GLenum glew_status = glewInit();
     if (glew_status != GLEW_OK) {
-        cerr << "Error: glewInit: " << glew_status << endl;
+        print_err("Error: glewInit: " + to_string(glew_status));
         return EXIT_FAILURE;
     }
 
