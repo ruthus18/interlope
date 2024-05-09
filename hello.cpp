@@ -3,19 +3,110 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
-using namespace std;
-
-
 // Terminal colors
 #define TERM_RED_BG   "\033[0;41m"
 #define TERM_CYAN_BG  "\033[0;104m"
 #define TERM_RESET    "\033[0;0m"
 // More: https://en.wikipedia.org/wiki/ANSI_escape_code#In_C
 
+using namespace std;
+
+void greeting_log();
+void print_err(const string& msg);
+void main_loop(SDL_Window* window);
+bool init_resources();
+void free_resources();
+void main_loop(SDL_Window* window);
+
+
+int main(int argc, char* argv[]) {
+    SDL_Window* window;
+    SDL_GLContext gl_context;
+    GLenum glew_status;
+
+    greeting_log();
+    // SDL init
+    SDL_Init(SDL_INIT_VIDEO); 
+
+    window = SDL_CreateWindow(
+        "Interlope",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        1920, 1080,
+        SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
+    );
+    gl_context = SDL_GL_CreateContext(window);
+    cout << "SDL Initialized" << endl;
+
+    // Extension wrangler init
+    glew_status = glewInit();
+    if (glew_status != GLEW_OK) {
+        print_err("Error: glewInit: " + to_string(glew_status));
+        return EXIT_FAILURE;
+    }
+
+    if (!init_resources())
+        return EXIT_FAILURE;
+
+    main_loop(window);
+    free_resources();
+
+    return EXIT_SUCCESS;
+}
+
+
+/* ====== Logging ====== */
+
+void greeting_log() {
+    cout
+        << TERM_CYAN_BG
+        << "------ Interlope Engine ------"
+        << TERM_RESET << endl;
+}
+
+void print_err(const string& msg) {
+    cerr << TERM_RED_BG << "[!] " <<  msg << TERM_RESET << endl;
+}
+
+// Print compilation errors from the OpenGL shader compiler
+//
+// void print_shader_err(GLuint object) {
+//     GLint log_len = 0;
+//     if (glIsShader(object)) {
+//         glGetShaderiv()
+//     }
+// }
+
+
+/* ====== Resource Loading, Shaders ====== */
 
 GLuint program;
 GLint attribute_coord2d;
 
+
+char* file_read(const char* filename) {
+    SDL_RWops *rw = SDL_RWFromFile(filename, "rb");
+    if (rw == NULL) return NULL;
+
+    Sint64 res_size = SDL_RWsize(rw);
+    char* res = (char*) malloc(res_size + 1);
+    char* buf = res;
+
+    Sint64 nb_read_total = 0, nb_read = 1;
+    while (nb_read_total < res_size && nb_read != 0) {
+        nb_read = SDL_RWread(rw, buf, 1, (res_size - nb_read_total));
+        nb_read_total += nb_read;
+        buf += nb_read;
+    }
+
+    SDL_RWclose(rw);
+    if (nb_read_total != res_size) {
+        free(res);
+        return NULL;
+    }
+
+    res[nb_read_total] = '\0';
+    return res;
+}
 
 bool init_resources() {
     GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
@@ -75,11 +166,9 @@ bool init_resources() {
     return true;
 }
 
-
 void free_resources() {
     glDeleteProgram(program);
 }
-
 
 void render(SDL_Window* window) {
     glClearColor(1.0, 1.0, 1.0, 1.0);  // color bg in white
@@ -114,7 +203,6 @@ void render(SDL_Window* window) {
     SDL_GL_SwapWindow(window);
 }
 
-
 void main_loop(SDL_Window* window) {
     while (true) {
         SDL_Event event;
@@ -125,45 +213,4 @@ void main_loop(SDL_Window* window) {
             render(window);
         }
     }
-}
-
-
-void print_err(const string& msg) {
-    cerr << TERM_RED_BG << "[!] " <<  msg << TERM_RESET << endl;
-}
-
-
-int main(int argc, char* argv[]) {
-    // Logs init
-    cout
-        << TERM_CYAN_BG
-        << "------ Interlope Engine ------"
-        << TERM_RESET << endl;
-
-    // SDL init
-    SDL_Init(SDL_INIT_VIDEO); 
-
-    SDL_Window* window = SDL_CreateWindow(
-        "Interlope",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1920, 1080,
-        SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
-    );
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-    cout << "SDL Initialized" << endl;
-
-    // Extension wrangler init
-    GLenum glew_status = glewInit();
-    if (glew_status != GLEW_OK) {
-        print_err("Error: glewInit: " + to_string(glew_status));
-        return EXIT_FAILURE;
-    }
-
-    if (!init_resources())
-        return EXIT_FAILURE;
-
-    main_loop(window);
-    free_resources();
-
-    return EXIT_SUCCESS;
 }
