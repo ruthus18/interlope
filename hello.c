@@ -5,29 +5,38 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
+#define VERSION "0.0.0dev"
 
 // Terminal colors
+#define TERM_GREEN   "\033[0;32m"
 #define TERM_RED_BG   "\033[0;41m"
 #define TERM_CYAN_BG  "\033[0;104m"
 #define TERM_RESET    "\033[0;0m"
 // More: https://en.wikipedia.org/wiki/ANSI_escape_code#In_C
 
 
-void greeting_log();
+void greeting_log(const char* msg, ...);
+void info_log(const char* msg, ...);
+void success_log(const char* msg, ...);
 void error_log(const char* msg, ...);
-void shader_error_log(GLuint object);
+void opengl_error_log(GLuint object);
+char* file_read(const char* filename);
+GLuint create_shader(const char* filename, GLenum shader_type);
 
-void main_loop(SDL_Window* window);
 bool init_resources();
 void free_resources();
+void main_loop(SDL_Window* window);
+void render(SDL_Window* window);
 
 
 int main(int argc, char* argv[]) {
     SDL_Window* window;
-    SDL_GLContext gl_context;
+    SDL_GLContext context;
     GLenum glew_status;
 
-    greeting_log();
+    greeting_log("======  Interlope Engine  ======");
+    info_log("VERSION: %s", VERSION);
+
     // SDL init
     SDL_Init(SDL_INIT_VIDEO); 
 
@@ -42,8 +51,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    gl_context = SDL_GL_CreateContext(window);
-    fprintf(stdout, "SDL Initialized\n");
+    context = SDL_GL_CreateContext(window);
+    success_log("SDL Initialized");
 
     // Extension wrangler init
     glew_status = glewInit();
@@ -56,6 +65,7 @@ int main(int argc, char* argv[]) {
         error_log("Unable to init resources");
         return EXIT_FAILURE;
     }
+    success_log("Resouces initialized");
 
     main_loop(window);
     free_resources();
@@ -66,19 +76,38 @@ int main(int argc, char* argv[]) {
 
 /* ====== Logging ====== */
 
-void greeting_log() {
-    printf(
-        TERM_CYAN_BG
-        "------ Interlope Engine ------"
-        TERM_RESET
-        "\n"
-    );
+void greeting_log(const char* msg, ...) {
+    fprintf(stdout, "%s", TERM_CYAN_BG);
+
+    va_list argp;
+    va_start(argp, msg);
+    vfprintf(stdout, msg, argp);
+    va_end(argp);
+
+    fprintf(stdout, "%s\n", TERM_RESET);
 }
 
-// Print pretty error to stderr
-//
+void info_log(const char* msg, ...) {
+    va_list argp;
+    va_start(argp, msg);
+    vfprintf(stdout, msg, argp);
+    va_end(argp);
+    fprintf(stdout, "\n");
+}
+
+void success_log(const char* msg, ...) {
+    fprintf(stdout, "%s[+] ", TERM_GREEN);
+
+    va_list argp;
+    va_start(argp, msg);
+    vfprintf(stdout, msg, argp);
+    va_end(argp);
+
+    fprintf(stdout, "%s\n", TERM_RESET);
+}
+
 void error_log(const char* msg, ...) {
-    fprintf(stderr, "%s[!] ", TERM_RED_BG);
+    fprintf(stderr, "%s[X] ", TERM_RED_BG);
 
     va_list argp;
     va_start(argp, msg);
@@ -88,21 +117,34 @@ void error_log(const char* msg, ...) {
     fprintf(stderr, "%s\n", TERM_RESET);
 }
 
-// Print compilation errors from the OpenGL shader compiler
+/* Print compilation errors from the OpenGL shader compiler */
 //
-void shader_error_log(GLuint object) {
-    GLint log_len = 0;
+void opengl_error_log(GLuint object) {
+    char* log_msg;
+    int log_len;
+    bool is_shader = glIsShader(object);
+    bool is_program = glIsProgram(object);
 
-    if (glIsShader(object)) {
+    if (is_shader)
         glGetShaderiv(object, GL_INFO_LOG_LENGTH, &log_len);
-    }
-    else if (glIsProgram(object)) {
+
+    else if (is_program)
         glGetProgramiv(object, GL_INFO_LOG_LENGTH, &log_len);
-    }
+
     else {
-        error_log("Printlog Error: object is not a shader or program");
+        error_log("[opengl_error_log] object is not a shader or program");
         return;
     }
+    log_msg = (char*) malloc(log_len);
+
+    if (is_shader)
+        glGetShaderInfoLog(object, log_len, NULL, log_msg);
+
+    else if (is_program)
+        glGetProgramInfoLog(object, log_len, NULL, log_msg);
+
+    error_log(log_msg);
+    free(log_msg);
 }
 
 
@@ -114,66 +156,62 @@ GLint attribute_coord2d;
 
 char* file_read(const char* filename) {
     SDL_RWops *rw = SDL_RWFromFile(filename, "rb");
-    if (rw == NULL) return NULL;
+	if (rw == NULL) return NULL;
+	
+	Sint64 res_size = SDL_RWsize(rw);
+	char* res = (char*)malloc(res_size + 1);
 
-    Sint64 res_size = SDL_RWsize(rw);
-    char* res = (char*) malloc(res_size + 1);
-    char* buf = res;
+	Sint64 nb_read_total = 0, nb_read = 1;
+	char* buf = res;
+	while (nb_read_total < res_size && nb_read != 0) {
+		nb_read = SDL_RWread(rw, buf, 1, (res_size - nb_read_total));
+		nb_read_total += nb_read;
+		buf += nb_read;
+	}
+	SDL_RWclose(rw);
+	if (nb_read_total != res_size) {
+		free(res);
+		return NULL;
+	}
+	
+	res[nb_read_total] = '\0';
+	return res;
+}
 
-    Sint64 nb_read_total = 0, nb_read = 1;
-    while (nb_read_total < res_size && nb_read != 0) {
-        nb_read = SDL_RWread(rw, buf, 1, (res_size - nb_read_total));
-        nb_read_total += nb_read;
-        buf += nb_read;
+GLuint create_shader(const char* filename, GLenum shader_type) {
+    GLuint shader;
+    const GLchar* shader_source = file_read(filename);
+    GLint compile_ok;
+
+    if (shader_source == NULL) {
+        error_log("Error on file read: %s", SDL_GetError());
+        return 0;
     }
 
-    SDL_RWclose(rw);
-    if (nb_read_total != res_size) {
-        free(res);
-        return NULL;
+    shader = glCreateShader(shader_type);
+    glShaderSource(shader, 1, &shader_source, NULL);
+    free((void*)shader_source);
+
+    glCompileShader(shader);
+    
+    compile_ok = GL_FALSE;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_ok);
+    if (!compile_ok) {
+        error_log("Error on loading shader: %s", filename);
+        opengl_error_log(shader);
+        return 0;
     }
 
-    res[nb_read_total] = '\0';
-    return res;
+    info_log("Shader loaded: %s", filename);
+    return shader;
 }
 
 bool init_resources() {
     GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
+    GLuint v_shader, f_shader;
 
-    // Vertex Shader
-    GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
-    const char* v_shader_source = 
-        "#version 120\n"
-        "attribute vec2 coord2d;"
-        "void main(void) {"
-        "    gl_Position = vec4(coord2d, 0.0, 1.0);"
-        "}";
-
-    glShaderSource(v_shader, 1, &v_shader_source, NULL);
-    glCompileShader(v_shader);
-    glGetShaderiv(v_shader, GL_COMPILE_STATUS, &compile_ok);
-    if (!compile_ok) {
-        error_log("Error in vertex shader");
-        // return false;
-    }
-
-    // Fragment Shader
-    GLuint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* f_shader_source = 
-        "#version 120\n"
-        "void main(void) {"
-        "    gl_FragColor[0] = gl_FragCoord.x/3072.0;;"
-        "    gl_FragColor[1] = gl_FragCoord.y/1920.0;"
-        "    gl_FragColor[2] = 1;"
-        "}";
-
-    glShaderSource(f_shader, 1, &f_shader_source, NULL);
-    glCompileShader(f_shader);
-    glGetShaderiv(f_shader, GL_COMPILE_STATUS, &compile_ok);
-    if (!compile_ok) {
-        error_log("Error in fragment shader");
-        // return false;
-    }
+    v_shader = create_shader("triangle.v.glsl", GL_VERTEX_SHADER);
+    f_shader = create_shader("triangle.f.glsl", GL_FRAGMENT_SHADER);
 
     // GLSL Program
     program = glCreateProgram();
@@ -183,6 +221,8 @@ bool init_resources() {
     glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
     if (!link_ok) {
         error_log("Error in glLinkProgram");
+        opengl_error_log(program);
+        return false;
     }
 
     // Bind vertex coords
@@ -197,6 +237,18 @@ bool init_resources() {
 
 void free_resources() {
     glDeleteProgram(program);
+}
+
+void main_loop(SDL_Window* window) {
+    while (true) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return;
+            }
+            render(window);
+        }
+    }
 }
 
 void render(SDL_Window* window) {
@@ -230,16 +282,4 @@ void render(SDL_Window* window) {
     glDisableVertexAttribArray(attribute_coord2d);
 
     SDL_GL_SwapWindow(window);
-}
-
-void main_loop(SDL_Window* window) {
-    while (true) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                return;
-            }
-            render(window);
-        }
-    }
 }
