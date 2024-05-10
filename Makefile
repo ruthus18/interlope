@@ -1,7 +1,10 @@
 
 all:
 	mkdir -p build
-	gcc src/main.c -lSDL2 -lGL -lGLEW -lglut -o build/interlope
+	gcc -lSDL2 -lGL -lGLEW -lglut -o build/interlope\
+		src/main.c \
+		src/logging.c
+
 	rm -rf build/shaders && cp -r src/shaders build/shaders
 clean:
 	rm -f *.o src/main
