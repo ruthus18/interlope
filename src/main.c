@@ -3,14 +3,13 @@
 #include <stdbool.h>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+#include <cglm/cglm.h>
 
 #include "logging.h"
 
-#define VERSION "0.0.0dev"
 #define SHADERS_DIR "shaders/"
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
-
 
 
 bool init_resources();
@@ -34,8 +33,7 @@ int main(int argc, char* argv[]) {
     GLenum glew_status;
 
     greeting_log("======  Interlope Engine  ======");
-    info_log("VERSION: %s", VERSION);
-    info_log("SHADERS DIR: %s", VERSION);
+    info_log("SHADERS DIR: %s", SHADERS_DIR);
     info_log("RESOLUTION: %i x %i", SCREEN_WIDTH, SCREEN_HEIGHT);
     info_log("------");
 

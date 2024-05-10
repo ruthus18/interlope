@@ -1,9 +1,12 @@
 
 all:
 	mkdir -p build
-	gcc -lm -lSDL2 -lGL -lGLEW -lglut -o build/interlope\
-		src/main.c \
-		src/logging.c
+	gcc -Ivendor/include -L vendor \
+			-lcglm \
+		-lm -lSDL2 -lGL -lGLEW -lglut \
+		-o build/interlope\
+			src/main.c \
+			src/logging.c
 
 	rm -rf build/shaders && cp -r src/shaders build/shaders
 clean:
@@ -11,4 +14,6 @@ clean:
 .PHONY: all clean
 
 run:
-	cd build && ./interlope && cd ..
+	cd build && \
+	LD_LIBRARY_PATH=../vendor ./interlope && \
+	cd ..
