@@ -11,12 +11,12 @@
 #define SCREEN_HEIGHT 1080
 
 
-char* file_read(const char* filename);
-GLuint create_shader(const char* filename, GLenum shader_type);
+void main_loop(SDL_Window* window);
 
 bool init_resources();
 void free_resources();
-void main_loop(SDL_Window* window);
+char* file_read(const char* filename);
+GLuint create_shader(const char* filename, GLenum shader_type);
 void render(SDL_Window* window);
 
 
@@ -83,10 +83,74 @@ int main(int argc, char* argv[]) {
 }
 
 
-/* ====== Resource Management, Shaders ====== */
+void main_loop(SDL_Window* window) {
+    while (true) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return;
+            }
+            render(window);
+        }
+    }
+}
+
+
+/* ====== Rendering ====== */
 
 GLuint program;
+GLuint vertex_buffer;
 GLint attribute_coord2d;
+
+
+bool init_resources() {
+    GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
+    GLuint v_shader, f_shader;
+
+    // Set mesh and vertex buffer
+    GLfloat mesh_data[] = {
+        -0.5, 0.5,
+        -0.5, -0.5,
+        0.5, 0.5,
+        0.5, 0.5,
+        -0.5, -0.5,
+        0.5, -0.5
+    };
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(mesh_data), mesh_data, GL_STATIC_DRAW);
+
+    // Init shaders
+    v_shader = create_shader("triangle.v.glsl", GL_VERTEX_SHADER);
+    f_shader = create_shader("triangle.f.glsl", GL_FRAGMENT_SHADER);
+
+    // GLSL Program
+    program = glCreateProgram();
+    glAttachShader(program, v_shader);
+    glAttachShader(program, f_shader);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
+    if (!link_ok) {
+        error_log("Error in glLinkProgram");
+        opengl_error_log(program);
+        return false;
+    }
+
+    // Bind vertex coords
+    const char* attribute_name = "coord2d";
+    attribute_coord2d = glGetAttribLocation(program, attribute_name);
+    if (attribute_coord2d == -1) {
+        error_log("Could not bind attribute ");
+    }
+
+    return true;
+}
+
+
+void free_resources() {
+    glDeleteProgram(program);
+    glDeleteBuffers(1, &vertex_buffer);
+}
 
 
 char* file_read(const char* filename) {
@@ -112,6 +176,7 @@ char* file_read(const char* filename) {
 	res[nb_read_total] = '\0';
 	return res;
 }
+
 
 GLuint create_shader(const char* filename, GLenum shader_type) {
     const char* shader_source;
@@ -148,77 +213,22 @@ GLuint create_shader(const char* filename, GLenum shader_type) {
     return shader;
 }
 
-bool init_resources() {
-    GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
-    GLuint v_shader, f_shader;
-
-    v_shader = create_shader("triangle.v.glsl", GL_VERTEX_SHADER);
-    f_shader = create_shader("triangle.f.glsl", GL_FRAGMENT_SHADER);
-
-    // GLSL Program
-    program = glCreateProgram();
-    glAttachShader(program, v_shader);
-    glAttachShader(program, f_shader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
-    if (!link_ok) {
-        error_log("Error in glLinkProgram");
-        opengl_error_log(program);
-        return false;
-    }
-
-    // Bind vertex coords
-    const char* attribute_name = "coord2d";
-    attribute_coord2d = glGetAttribLocation(program, attribute_name);
-    if (attribute_coord2d == -1) {
-        error_log("Could not bind attribute ");
-    }
-
-    return true;
-}
-
-void free_resources() {
-    glDeleteProgram(program);
-}
-
-
-/* ====== Rendering & Main Loop ====== */
-
-void main_loop(SDL_Window* window) {
-    while (true) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                return;
-            }
-            render(window);
-        }
-    }
-}
 
 void render(SDL_Window* window) {
     glClearColor(1.0, 1.0, 1.0, 1.0);  // color bg in white
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glEnableVertexAttribArray(attribute_coord2d);
 
-    // Describe mesh
-    GLfloat triangle_vertices[] = {
-        -0.5, 0.5,
-        -0.5, -0.5,
-        0.5, 0.5,
-        0.5, 0.5,
-        -0.5, -0.5,
-        0.5, -0.5
-    };
     glVertexAttribPointer(
         attribute_coord2d,  // attribute
         2,                  // num of elements per vertex (x,y)
         GL_FLOAT,           // the type of each value
         GL_FALSE,           // take our values as-is
         0,                  // no extra data between each position
-        triangle_vertices   // pointer to the C array
+        0                   // offset of first element
     );
     
     // Push each element in buffer_vertices to the vertex shader
