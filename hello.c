@@ -5,14 +5,15 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
-#define VERSION "0.0.0dev"
-
 // Terminal colors
 #define TERM_GREEN   "\033[0;32m"
 #define TERM_RED_BG   "\033[0;41m"
 #define TERM_CYAN_BG  "\033[0;104m"
 #define TERM_RESET    "\033[0;0m"
 // More: https://en.wikipedia.org/wiki/ANSI_escape_code#In_C
+
+#define VERSION "0.0.0dev"
+#define SHADERS_DIR "shaders/"
 
 
 void greeting_log(const char* msg, ...);
@@ -51,7 +52,15 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Context vars for SDL & OpenGL
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
+
     context = SDL_GL_CreateContext(window);
+    if (context == NULL) {
+        error_log("Unable to create SDL context: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+
     success_log("SDL Initialized");
 
     // Extension wrangler init
@@ -66,6 +75,10 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     success_log("Resouces initialized");
+
+    // Enable alpha
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     main_loop(window);
     free_resources();
@@ -179,9 +192,16 @@ char* file_read(const char* filename) {
 }
 
 GLuint create_shader(const char* filename, GLenum shader_type) {
+    const char* shader_source;
     GLuint shader;
-    const GLchar* shader_source = file_read(filename);
     GLint compile_ok;
+
+    char* full_path = malloc(strlen(SHADERS_DIR) + strlen(filename) + 1);
+    strcpy(full_path, SHADERS_DIR);
+    strcat(full_path, filename);
+
+    shader_source = file_read(full_path);
+    free(full_path);
 
     if (shader_source == NULL) {
         error_log("Error on file read: %s", SDL_GetError());
