@@ -1,7 +1,7 @@
 
 all:
 	mkdir -p build
-	gcc -lSDL2 -lGL -lGLEW -lglut -o build/interlope\
+	gcc -lm -lSDL2 -lGL -lGLEW -lglut -o build/interlope\
 		src/main.c \
 		src/logging.c
 

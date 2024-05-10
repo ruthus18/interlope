@@ -1,5 +1,6 @@
+#include <math.h>
+#include <time.h>
 #include <stdbool.h>
-
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 
@@ -11,13 +12,20 @@
 #define SCREEN_HEIGHT 1080
 
 
-void main_loop(SDL_Window* window);
 
 bool init_resources();
 void free_resources();
 char* file_read(const char* filename);
 GLuint create_shader(const char* filename, GLenum shader_type);
 void render(SDL_Window* window);
+void main_loop(SDL_Window* window);
+void update_window();
+
+/* Rendering */
+GLuint program;
+GLuint vertex_buffer;
+GLint attribute_coord2d, attribute_v_color;
+GLint uniform_fade;
 
 
 int main(int argc, char* argv[]) {
@@ -38,7 +46,7 @@ int main(int argc, char* argv[]) {
         "Interlope",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH, SCREEN_HEIGHT,
-        SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
+        SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_OPENGL
     );
     if (window == NULL) {
         error_log("Unable to create SDL window: %s", SDL_GetError());
@@ -79,6 +87,7 @@ int main(int argc, char* argv[]) {
     info_log("Shutdown engine");
     free_resources();
 
+    SDL_Quit();
     return EXIT_SUCCESS;
 }
 
@@ -86,45 +95,51 @@ int main(int argc, char* argv[]) {
 void main_loop(SDL_Window* window) {
     while (true) {
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
+        while (true) {
+            SDL_PollEvent(&event);
             if (event.type == SDL_QUIT) {
                 return;
             }
+            glUseProgram(program);
+            update_window();
             render(window);
         }
     }
 }
 
 
+void update_window() {
+    uint32_t delta = SDL_GetTicks();
+    float cur_fade = sinf(delta / 1000.0 * (2*3.14) / 5) / 2 + 0.5;
+
+    glUniform1f(uniform_fade, cur_fade);
+}
+
+
 /* ====== Rendering ====== */
-
-GLuint program;
-GLuint vertex_buffer;
-GLint attribute_coord2d;
-
 
 bool init_resources() {
     GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
     GLuint v_shader, f_shader;
 
-    // Set mesh and vertex buffer
-    GLfloat mesh_data[] = {
-        -0.5, 0.5,
-        -0.5, -0.5,
-        0.5, 0.5,
-        0.5, 0.5,
-        -0.5, -0.5,
-        0.5, -0.5
+    float vertex_data[] = {
+        -0.5,  0.5,     1.0, 0.0, 0.0,
+        -0.5, -0.5,     1.0, 1.0, 0.0,
+         0.5,  0.5,     1.0, 0.0, 0.0,
+         0.5,  0.5,     1.0, 0.0, 0.0,
+        -0.5, -0.5,     1.0, 1.0, 0.0,
+         0.5, -0.5,     1.0, 1.0, 0.0
     };
+
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(mesh_data), mesh_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_data), vertex_data, GL_STATIC_DRAW);
 
-    // Init shaders
+    /* Init shaders */
     v_shader = create_shader("triangle.v.glsl", GL_VERTEX_SHADER);
     f_shader = create_shader("triangle.f.glsl", GL_FRAGMENT_SHADER);
 
-    // GLSL Program
+    /* GLSL Compiling Shaders */
     program = glCreateProgram();
     glAttachShader(program, v_shader);
     glAttachShader(program, f_shader);
@@ -135,12 +150,29 @@ bool init_resources() {
         opengl_error_log(program);
         return false;
     }
+    // ------
+
+    const char* attribute_name;
 
     // Bind vertex coords
-    const char* attribute_name = "coord2d";
+    attribute_name = "coord2d";
     attribute_coord2d = glGetAttribLocation(program, attribute_name);
     if (attribute_coord2d == -1) {
-        error_log("Could not bind attribute ");
+        error_log("Could not bind GLSL attribute: %s", attribute_name);
+    }
+
+    // Bind color coords
+    attribute_name = "v_color";
+    attribute_v_color = glGetAttribLocation(program, attribute_name);
+    if (attribute_v_color == -1) {
+        error_log("Could not bind GLSL attribute: %s", attribute_name);
+    }
+
+    // Bind fading
+    const char* uniform_name = "fade";
+    uniform_fade = glGetUniformLocation(program, uniform_name);
+    if (uniform_fade == -1) {
+        error_log("Could not bind uniform: %s", uniform_name);
     }
 
     return true;
@@ -219,22 +251,34 @@ void render(SDL_Window* window) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glEnableVertexAttribArray(attribute_coord2d);
 
+    glEnableVertexAttribArray(attribute_coord2d);
+    glEnableVertexAttribArray(attribute_v_color);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+
+    int attr_len = 5 * sizeof(float);
     glVertexAttribPointer(
         attribute_coord2d,  // attribute
         2,                  // num of elements per vertex (x,y)
         GL_FLOAT,           // the type of each value
         GL_FALSE,           // take our values as-is
-        0,                  // no extra data between each position
+        attr_len,           // no extra data between each position
         0                   // offset of first element
+    );
+    glVertexAttribPointer(
+        attribute_v_color,
+        3,                  
+        GL_FLOAT,           
+        GL_FALSE,           
+        attr_len,           
+        (void*) (2* sizeof(float))
     );
     
     // Push each element in buffer_vertices to the vertex shader
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDisableVertexAttribArray(attribute_coord2d);
+    glDisableVertexAttribArray(attribute_v_color);
 
     SDL_GL_SwapWindow(window);
 }
