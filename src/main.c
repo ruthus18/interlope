@@ -14,6 +14,8 @@
 
 #define VERSION "0.0.0dev"
 #define SHADERS_DIR "shaders/"
+#define SCREEN_WIDTH 1920
+#define SCREEN_HEIGHT 1080
 
 
 void greeting_log(const char* msg, ...);
@@ -37,6 +39,9 @@ int main(int argc, char* argv[]) {
 
     greeting_log("======  Interlope Engine  ======");
     info_log("VERSION: %s", VERSION);
+    info_log("SHADERS DIR: %s", VERSION);
+    info_log("RESOLUTION: %i x %i", SCREEN_WIDTH, SCREEN_HEIGHT);
+    info_log("------");
 
     // SDL init
     SDL_Init(SDL_INIT_VIDEO); 
@@ -44,7 +49,7 @@ int main(int argc, char* argv[]) {
     window = SDL_CreateWindow(
         "Interlope",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1920, 1080,
+        SCREEN_WIDTH, SCREEN_HEIGHT,
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
     );
     if (window == NULL) {
@@ -80,7 +85,10 @@ int main(int argc, char* argv[]) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    success_log("Entering main loop");
     main_loop(window);
+
+    info_log("Shutdown engine");
     free_resources();
 
     return EXIT_SUCCESS;
