@@ -1,7 +1,10 @@
-#include <iostream>
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdbool.h>
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+
 
 // Terminal colors
 #define TERM_RED_BG   "\033[0;41m"
@@ -9,14 +12,14 @@
 #define TERM_RESET    "\033[0;0m"
 // More: https://en.wikipedia.org/wiki/ANSI_escape_code#In_C
 
-using namespace std;
 
 void greeting_log();
-void print_err(const string& msg);
+void error_log(const char* msg, ...);
+void shader_error_log(GLuint object);
+
 void main_loop(SDL_Window* window);
 bool init_resources();
 void free_resources();
-void main_loop(SDL_Window* window);
 
 
 int main(int argc, char* argv[]) {
@@ -34,18 +37,25 @@ int main(int argc, char* argv[]) {
         1920, 1080,
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_OPENGL
     );
+    if (window == NULL) {
+        error_log("Unable to create SDL window: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+
     gl_context = SDL_GL_CreateContext(window);
-    cout << "SDL Initialized" << endl;
+    fprintf(stdout, "SDL Initialized\n");
 
     // Extension wrangler init
     glew_status = glewInit();
     if (glew_status != GLEW_OK) {
-        print_err("Error: glewInit: " + to_string(glew_status));
+        error_log("Error on init GLEW: %i", glew_status);
         return EXIT_FAILURE;
     }
 
-    if (!init_resources())
+    if (!init_resources()) {
+        error_log("Unable to init resources");
         return EXIT_FAILURE;
+    }
 
     main_loop(window);
     free_resources();
@@ -57,24 +67,43 @@ int main(int argc, char* argv[]) {
 /* ====== Logging ====== */
 
 void greeting_log() {
-    cout
-        << TERM_CYAN_BG
-        << "------ Interlope Engine ------"
-        << TERM_RESET << endl;
+    printf(
+        TERM_CYAN_BG
+        "------ Interlope Engine ------"
+        TERM_RESET
+        "\n"
+    );
 }
 
-void print_err(const string& msg) {
-    cerr << TERM_RED_BG << "[!] " <<  msg << TERM_RESET << endl;
+// Print pretty error to stderr
+//
+void error_log(const char* msg, ...) {
+    fprintf(stderr, "%s[!] ", TERM_RED_BG);
+
+    va_list argp;
+    va_start(argp, msg);
+    vfprintf(stderr, msg, argp);
+    va_end(argp);
+
+    fprintf(stderr, "%s\n", TERM_RESET);
 }
 
 // Print compilation errors from the OpenGL shader compiler
 //
-// void print_shader_err(GLuint object) {
-//     GLint log_len = 0;
-//     if (glIsShader(object)) {
-//         glGetShaderiv()
-//     }
-// }
+void shader_error_log(GLuint object) {
+    GLint log_len = 0;
+
+    if (glIsShader(object)) {
+        glGetShaderiv(object, GL_INFO_LOG_LENGTH, &log_len);
+    }
+    else if (glIsProgram(object)) {
+        glGetProgramiv(object, GL_INFO_LOG_LENGTH, &log_len);
+    }
+    else {
+        error_log("Printlog Error: object is not a shader or program");
+        return;
+    }
+}
 
 
 /* ====== Resource Loading, Shaders ====== */
@@ -124,7 +153,7 @@ bool init_resources() {
     glCompileShader(v_shader);
     glGetShaderiv(v_shader, GL_COMPILE_STATUS, &compile_ok);
     if (!compile_ok) {
-        cerr << "Error in vertex shader" << endl;
+        error_log("Error in vertex shader");
         // return false;
     }
 
@@ -133,8 +162,8 @@ bool init_resources() {
     const char* f_shader_source = 
         "#version 120\n"
         "void main(void) {"
-        "    gl_FragColor[0] = gl_FragCoord.x/1920.0;"
-        "    gl_FragColor[1] = gl_FragCoord.y/1080.0;"
+        "    gl_FragColor[0] = gl_FragCoord.x/3072.0;;"
+        "    gl_FragColor[1] = gl_FragCoord.y/1920.0;"
         "    gl_FragColor[2] = 1;"
         "}";
 
@@ -142,7 +171,7 @@ bool init_resources() {
     glCompileShader(f_shader);
     glGetShaderiv(f_shader, GL_COMPILE_STATUS, &compile_ok);
     if (!compile_ok) {
-        cerr << "Error in fragment shader" << endl;
+        error_log("Error in fragment shader");
         // return false;
     }
 
@@ -153,14 +182,14 @@ bool init_resources() {
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
     if (!link_ok) {
-        cerr << "Error in glLinkProgram" << endl;
+        error_log("Error in glLinkProgram");
     }
 
     // Bind vertex coords
     const char* attribute_name = "coord2d";
     attribute_coord2d = glGetAttribLocation(program, attribute_name);
     if (attribute_coord2d == -1) {
-        cerr << "Could not bind attribute " << attribute_name << endl;
+        error_log("Could not bind attribute ");
     }
 
     return true;
