@@ -5,13 +5,11 @@
 #include <SDL2/SDL.h>
 #include <cglm/cglm.h>
 
+#include "config.h"
 #include "logging.h"
 
-#define SHADERS_DIR "shaders/"
-#define SCREEN_WIDTH 1920
-#define SCREEN_HEIGHT 1080
 
-
+void print_engine_info();
 bool init_resources();
 void free_resources();
 char* file_read(const char* filename);
@@ -31,11 +29,6 @@ int main(int argc, char* argv[]) {
     SDL_Window* window;
     SDL_GLContext context;
     GLenum glew_status;
-
-    greeting_log("======  Interlope Engine  ======");
-    info_log("SHADERS DIR: %s", SHADERS_DIR);
-    info_log("RESOLUTION: %i x %i", SCREEN_WIDTH, SCREEN_HEIGHT);
-    info_log("------");
 
     // SDL init
     SDL_Init(SDL_INIT_VIDEO); 
@@ -60,8 +53,6 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    success_log("SDL Initialized");
-
     // Extension wrangler init
     glew_status = glewInit();
     if (glew_status != GLEW_OK) {
@@ -73,7 +64,7 @@ int main(int argc, char* argv[]) {
         error_log("Unable to init resources");
         return EXIT_FAILURE;
     }
-    success_log("Resouces initialized");
+    print_engine_info();
 
     // Enable alpha
     glEnable(GL_BLEND);
@@ -90,18 +81,34 @@ int main(int argc, char* argv[]) {
 }
 
 
+void print_engine_info() {
+    SDL_version sdl_version;
+    SDL_GetVersion(&sdl_version);
+
+    greeting_log("======  Interlope Engine  ======");
+    info_log("ENGINE VERSION: %s", ENGINE_VERSION);
+    info_log("OPENGL VERSION: %s", glGetString(GL_VERSION));
+    info_log("GLEW VERSION: %s", glewGetString(GLEW_VERSION));
+    info_log("SDL VERSION: %u.%u.%u", sdl_version.major, sdl_version.minor, sdl_version.patch);
+    info_log("VIDEO DEVICE: %s (%s)", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
+    info_log("SHADERS DIR: %s", SHADERS_DIR);
+    info_log("RESOLUTION: %i x %i", SCREEN_WIDTH, SCREEN_HEIGHT);
+    info_log("------");
+}
+
+
 void main_loop(SDL_Window* window) {
-    while (true) {
-        SDL_Event event;
-        while (true) {
-            SDL_PollEvent(&event);
-            if (event.type == SDL_QUIT) {
-                return;
-            }
-            glUseProgram(program);
-            update_window();
-            render(window);
+    bool is_exit = false;
+    SDL_Event event;
+
+    while (!is_exit) {
+        SDL_PollEvent(&event);
+        if (event.type == SDL_QUIT) {
+            is_exit = true;
         }
+        glUseProgram(program);
+        update_window();
+        render(window);
     }
 }
 
@@ -265,13 +272,13 @@ void render(SDL_Window* window) {
     );
     glVertexAttribPointer(
         attribute_v_color,
-        3,                  
-        GL_FLOAT,           
-        GL_FALSE,           
-        attr_len,           
+        3,
+        GL_FLOAT,  
+        GL_FALSE,
+        attr_len,
         (void*) (2* sizeof(float))
     );
-    
+
     // Push each element in buffer_vertices to the vertex shader
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
