@@ -6,9 +6,15 @@
 #include "logging.h"
 
 
+#define NUM_VAO 1
+GLuint rendering_program;
+GLuint vao[NUM_VAO];
+
+
 void print_engine_info();
 void init(GLFWwindow* window);
 void display(GLFWwindow* window, double current_time);
+GLuint create_shader_program();
 
 
 int main() {
@@ -61,16 +67,44 @@ void print_engine_info() {
 }
 
 
-/* App Initialization */
-//
-void init(GLFWwindow* window) {}
+void init(GLFWwindow* window) {
+    rendering_program = create_shader_program();
+
+    glGenVertexArrays(NUM_VAO, vao);
+    glBindVertexArray(vao[0]);
+}
 
 
-/* Rendering Loop */
-//
 void display(GLFWwindow* window, double current_time) {
+    glUseProgram(rendering_program);
+    glDrawArrays(GL_POINTS, 0, 1);
+}
 
-    // Set color to be applied when clearing the color buffer
-    glClearColor(0.9, 0.9, 0.9, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+
+GLuint create_shader_program() {
+    const char* v_shader_src =
+        "#version 460  \n"
+        "void main()  \n"
+        "{ gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }";
+
+    const char* f_shader_src = 
+        "#version 460  \n"
+        "out vec4 color;  \n"
+        "void main()  \n"
+        "{ color = vec4(1.0, 0.0, 5.0, 1.0); }";
+
+    GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
+    GLuint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(v_shader, 1, &v_shader_src, NULL);
+    glShaderSource(f_shader, 1, &f_shader_src, NULL);
+    glCompileShader(v_shader);
+    glCompileShader(f_shader);
+
+    GLuint vf_program = glCreateProgram();
+    glAttachShader(vf_program, v_shader);
+    glAttachShader(vf_program, f_shader);
+    glLinkProgram(vf_program);
+
+    return vf_program;
 }
