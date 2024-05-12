@@ -3,7 +3,8 @@ all:
 	mkdir -p build
 	gcc -Ivendor/include -L vendor \
 			-lcglm \
-		-lm -lSDL2 -lGL -lGLEW -lglut \
+			-lglfw \
+		-lm -lGL -lGLEW \
 		-o build/interlope\
 			src/main.c \
 			src/logging.c
