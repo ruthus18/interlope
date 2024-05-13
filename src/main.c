@@ -1,19 +1,23 @@
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "config.h"
-#include "utils_io.h"
 #include "types.h"
+#include "utils/io.h"
+#include "utils/time.h"
+
+#define __DEBUG__SHOW_FPS_IN_TITLE true
+
 
 GLuint vao[NUM_VAO];
 ProgramID program;
 
-
 void init(GLFWwindow* window);
-void process(GLFWwindow* window, double current_time);
+void process(GLFWwindow* window, double delta);
 
 ProgramID create_shader_program();
 ShaderID load_shader(const char* path, int shader_type);
@@ -44,8 +48,17 @@ int main() {
     print_engine_info();
     init(window);
 
+    double delta;
+
     while (!glfwWindowShouldClose(window)) {
-        process(window, glfwGetTime());
+        delta = update_time();
+        process(window, delta);
+
+        if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed()) {
+            char title_buf[128];
+            sprintf(title_buf, "%s [%i FPS]", SCREEN_TITLE, get_fps());
+            glfwSetWindowTitle(window, title_buf);
+        }
 
         glfwSwapBuffers(window);  // Draw content, VSync
         glfwPollEvents();         // Handle window-related events (kb, mouse...) 
@@ -71,9 +84,9 @@ float inc_x = 0.008;
 float inc_y = 0.005;
 
 
-void process(GLFWwindow* window, double current_time) {
+void process(GLFWwindow* window, double delta) {
     glClear(GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(0.9, 0.9, 0.9, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);

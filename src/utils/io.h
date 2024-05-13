@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 // Terminal colors
 #define TERM_RED   "\033[0;31m"

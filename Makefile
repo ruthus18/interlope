@@ -7,7 +7,8 @@ all:
 		-lm -lGL -lGLEW \
 		-o build/interlope\
 			src/main.c \
-			src/utils_io.c
+			src/utils/io.c \
+			src/utils/time.c \
 
 	rm -rf build/shaders && cp -r src/shaders build/shaders
 clean:
