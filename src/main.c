@@ -65,11 +65,34 @@ void init(GLFWwindow* window) {
 }
 
 
+float x = 0.0;
+float y = 0.5;
+float inc_x = 0.008;
+float inc_y = 0.005;
+
+
 void process(GLFWwindow* window, double current_time) {
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glUseProgram(program);
 
-    glPointSize(10.0);
-    glDrawArrays(GL_POINTS, 0, 1);
+    x += inc_x;
+    if (x > 1.0)    inc_x = -0.008;
+    if (x < -1.0)   inc_x =  0.008;
+
+    y += inc_y;
+    if (y > 1.0)    inc_y = -0.005;
+    if (y < -1.0)   inc_y =  0.005;
+
+    GLuint s_offset_x = glGetUniformLocation(program, "offset_x");
+    GLuint s_offset_y = glGetUniformLocation(program, "offset_y");
+    glProgramUniform1f(program, s_offset_x, x);
+    glProgramUniform1f(program, s_offset_y, y);
+
+    // glPointSize(10.0);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 
@@ -77,8 +100,8 @@ ProgramID create_shader_program() {
     ProgramID _program = glCreateProgram();
     int link_ok;
 
-    ShaderID v_shader = load_shader("point.v.glsl", GL_VERTEX_SHADER);
-    ShaderID f_shader = load_shader("point.f.glsl", GL_FRAGMENT_SHADER);
+    ShaderID v_shader = load_shader("tri.v.glsl", GL_VERTEX_SHADER);
+    ShaderID f_shader = load_shader("tri.f.glsl", GL_FRAGMENT_SHADER);
     glAttachShader(_program, v_shader);
     glAttachShader(_program, f_shader);
 
