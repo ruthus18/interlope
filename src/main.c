@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <GL/glew.h>
@@ -5,16 +6,10 @@
 
 #include "config.h"
 #include "utils_io.h"
+#include "types.h"
 
-/* GLuint is a cross-platform type, so making more readable macros aliases */
-#define ProgramID GLuint
-#define ShaderID GLuint
-
-
-#define NUM_VAO 1
-
-GLuint vao[NUM_VAO];  // Vertex Array Objects
-ProgramID rendering_program;
+GLuint vao[NUM_VAO];
+ProgramID program;
 
 
 void init(GLFWwindow* window);
@@ -22,6 +17,7 @@ void process(GLFWwindow* window, double current_time);
 
 ProgramID create_shader_program();
 ShaderID load_shader(const char* path, int shader_type);
+bool check_opengl_error();
 
 
 int main() {
@@ -62,7 +58,7 @@ int main() {
 
 
 void init(GLFWwindow* window) {
-    rendering_program = create_shader_program();
+    program = create_shader_program();
 
     glGenVertexArrays(NUM_VAO, vao);
     glBindVertexArray(vao[0]);
@@ -70,7 +66,7 @@ void init(GLFWwindow* window) {
 
 
 void process(GLFWwindow* window, double current_time) {
-    glUseProgram(rendering_program);
+    glUseProgram(program);
 
     glPointSize(10.0);
     glDrawArrays(GL_POINTS, 0, 1);
@@ -79,19 +75,27 @@ void process(GLFWwindow* window, double current_time) {
 
 ProgramID create_shader_program() {
     ProgramID _program = glCreateProgram();
+    int link_ok;
 
     ShaderID v_shader = load_shader("point.v.glsl", GL_VERTEX_SHADER);
     ShaderID f_shader = load_shader("point.f.glsl", GL_FRAGMENT_SHADER);
-
     glAttachShader(_program, v_shader);
     glAttachShader(_program, f_shader);
+
     glLinkProgram(_program);
+    glGetProgramiv(_program, GL_LINK_STATUS, &link_ok);
+    if (link_ok != 1) {
+        error_log("GL program linking error");
+        program_log(_program);
+    }
+
     return _program;
 }
 
 
 ShaderID load_shader(const char* file_path, int shader_type) {
     ShaderID shader = glCreateShader(shader_type);
+    int compile_ok;
 
     const char* path = shader_path(file_path);
     const char* file_buffer = load_file(path);
@@ -101,5 +105,24 @@ ShaderID load_shader(const char* file_path, int shader_type) {
     free((void*) file_buffer);
 
     glCompileShader(shader);
+    check_opengl_error();
+
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_ok);
+    if (compile_ok != 1) {
+        error_log("Shader compilation error; file=%s", file_path);
+        shader_log(shader);
+    }
     return shader;
+}
+
+
+bool check_opengl_error() {
+    bool is_err = false;
+    int gl_err = glGetError();
+
+    while (gl_err != GL_NO_ERROR) {
+        error_log("OpenGL Error: %s", gl_err);
+        is_err = true;
+    }
+    return is_err;
 }
