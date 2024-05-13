@@ -1,20 +1,27 @@
 #include <stdlib.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "config.h"
-#include "logging.h"
+#include "utils_io.h"
+
+/* GLuint is a cross-platform type, so making more readable macros aliases */
+#define ProgramID GLuint
+#define ShaderID GLuint
 
 
 #define NUM_VAO 1
-GLuint rendering_program;
-GLuint vao[NUM_VAO];
+
+GLuint vao[NUM_VAO];  // Vertex Array Objects
+ProgramID rendering_program;
 
 
-void print_engine_info();
 void init(GLFWwindow* window);
-void display(GLFWwindow* window, double current_time);
-GLuint create_shader_program();
+void process(GLFWwindow* window, double current_time);
+
+ProgramID create_shader_program();
+ShaderID load_shader(const char* path, int shader_type);
 
 
 int main() {
@@ -42,28 +49,15 @@ int main() {
     init(window);
 
     while (!glfwWindowShouldClose(window)) {
-        display(window, glfwGetTime());
+        process(window, glfwGetTime());
+
         glfwSwapBuffers(window);  // Draw content, VSync
         glfwPollEvents();         // Handle window-related events (kb, mouse...) 
     }
-
     glfwDestroyWindow(window);
     glfwTerminate();
 
     return EXIT_SUCCESS;
-}
-
-
-void print_engine_info() {
-    greeting_log("======  Interlope Engine  ======");
-    info_log("ENGINE VERSION: %s", ENGINE_VERSION);
-    info_log("OPENGL VERSION: %s", glGetString(GL_VERSION));
-    info_log("GLEW VERSION: %s", glewGetString(GLEW_VERSION));
-    info_log("GLFW VERSION: %u.%u.%u", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR);
-    info_log("VIDEO DEVICE: %s (%s)", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
-    info_log("SHADERS DIR: %s", SHADERS_DIR);
-    info_log("RESOLUTION: %i x %i", SCREEN_WIDTH, SCREEN_HEIGHT);
-    info_log("------");
 }
 
 
@@ -75,36 +69,37 @@ void init(GLFWwindow* window) {
 }
 
 
-void display(GLFWwindow* window, double current_time) {
+void process(GLFWwindow* window, double current_time) {
     glUseProgram(rendering_program);
+
+    glPointSize(10.0);
     glDrawArrays(GL_POINTS, 0, 1);
 }
 
 
-GLuint create_shader_program() {
-    const char* v_shader_src =
-        "#version 460  \n"
-        "void main()  \n"
-        "{ gl_Position = vec4(0.0, 0.0, 0.0, 1.0); }";
+ProgramID create_shader_program() {
+    ProgramID _program = glCreateProgram();
 
-    const char* f_shader_src = 
-        "#version 460  \n"
-        "out vec4 color;  \n"
-        "void main()  \n"
-        "{ color = vec4(1.0, 0.0, 5.0, 1.0); }";
+    ShaderID v_shader = load_shader("point.v.glsl", GL_VERTEX_SHADER);
+    ShaderID f_shader = load_shader("point.f.glsl", GL_FRAGMENT_SHADER);
 
-    GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glAttachShader(_program, v_shader);
+    glAttachShader(_program, f_shader);
+    glLinkProgram(_program);
+    return _program;
+}
 
-    glShaderSource(v_shader, 1, &v_shader_src, NULL);
-    glShaderSource(f_shader, 1, &f_shader_src, NULL);
-    glCompileShader(v_shader);
-    glCompileShader(f_shader);
 
-    GLuint vf_program = glCreateProgram();
-    glAttachShader(vf_program, v_shader);
-    glAttachShader(vf_program, f_shader);
-    glLinkProgram(vf_program);
+ShaderID load_shader(const char* file_path, int shader_type) {
+    ShaderID shader = glCreateShader(shader_type);
 
-    return vf_program;
+    const char* path = shader_path(file_path);
+    const char* file_buffer = load_file(path);
+
+    glShaderSource(shader, 1, &file_buffer, NULL);
+    free((void*) path);
+    free((void*) file_buffer);
+
+    glCompileShader(shader);
+    return shader;
 }

@@ -12,3 +12,7 @@ void greeting_log(const char* msg, ...);
 void info_log(const char* msg, ...);
 void success_log(const char* msg, ...);
 void error_log(const char* msg, ...);
+void print_engine_info();
+
+char* shader_path(const char* file_path);
+char* load_file(const char* path);
