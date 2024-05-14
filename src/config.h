@@ -4,6 +4,7 @@
 #define SCREEN_HEIGHT 768
 #define SCREEN_TITLE "Interlope Engine"
 
-#define NUM_VAO 1  // stack size of Vertex Array Objects
+#define NUM_VAO 1    // max num of Vertex Array Objects
+#define NUM_VBO 2    // max num of Vertex Buffer Objects
 
 #define SHADERS_DIR "shaders/"
