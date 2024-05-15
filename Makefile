@@ -7,6 +7,7 @@ all:
 		-lm -lGL -lGLEW \
 		-o build/interlope\
 			src/main.c \
+			src/render.c \
 			src/utils/io.c \
 			src/utils/time.c \
 

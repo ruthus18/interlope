@@ -1,12 +1,10 @@
-#include <math.h>
 #include <stdbool.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "../config.h"
 #include "./time.h"
 #include "./io.h"
-
-#define __DEBUG__UPDATE_TIME false
 
 
 double current_time, last_time, delta, timer;
@@ -34,11 +32,11 @@ double update_time() {
     }
     else sec_passed = false;
 
-    if (__DEBUG__UPDATE_TIME)  info_log(
+    if (__DEBUG__PRINT_TIME_UPDATE)  info_log(
         "t_now=%f  t_last=%f  t_delta=%f  timer=%f",
         current_time, last_time, delta, timer
     );
-    return delta;
+    return current_time;
 }
 
 int get_fps() { return fps; }
