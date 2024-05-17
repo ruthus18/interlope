@@ -1,5 +1,4 @@
 #pragma once
-#include "../types.h"
 
 // Terminal colors
 #define TERM_RED   "\033[0;31m"
@@ -15,8 +14,8 @@ void success_log(const char* msg, ...);
 void error_log(const char* msg, ...);
 void print_engine_info();
 
-void shader_log(ShaderID shader);
-void program_log(ProgramID program);
+void shader_log(uint32_t shader);
+void program_log(uint32_t program);
 
 char* shader_path(const char* file_path);
 char* load_file(const char* path);

@@ -7,7 +7,6 @@
 #include <GLFW/glfw3.h>
 
 #include "../config.h"
-#include "../types.h"
 #include "io.h"
 
 
@@ -69,7 +68,7 @@ void print_engine_info() {
 }
 
 
-void shader_log(ShaderID shader) {
+void shader_log(uint32_t shader) {
     int log_len = 0;
     int ch = 0;
     char *log;
@@ -85,7 +84,7 @@ void shader_log(ShaderID shader) {
 }
 
 
-void program_log(ProgramID program) {
+void program_log(uint32_t program) {
     int log_len = 0;
     int ch = 0;
     char *log;

@@ -1,3 +1,4 @@
+#include <time.h>
 #include <stdlib.h>
 
 #include <GL/glew.h>
@@ -5,7 +6,6 @@
 
 #include "config.h"
 #include "render.h"
-#include "types.h"
 #include "utils/io.h"
 
 
@@ -13,7 +13,7 @@ GLuint vao[NUM_VAO];
 GLuint vbo[NUM_VBO];
 
 void init_cube_mesh();
-void frame(double delta);
+void display(double delta);
 void calc_persp_matrix(mat4 out);
 void calc_view_matrix(mat4 out);
 void calc_model_matrix(mat4 out);
@@ -24,13 +24,14 @@ int main() {
     render_init();
     print_engine_info();
 
-    load_shader("cube_vert.glsl", GL_VERTEX_SHADER);
-    load_shader("cube_frag.glsl", GL_FRAGMENT_SHADER);
+    load_shader("cube.vert", GL_VERTEX_SHADER);
+    load_shader("cube.frag", GL_FRAGMENT_SHADER);
     link_gl_program();
 
     init_cube_mesh();
-    render_run(&frame);
+    srand(time(NULL));  // set random generator
 
+    render_display(&display);
     render_close();
     return EXIT_SUCCESS;
 }
@@ -63,7 +64,7 @@ void init_cube_mesh() {
 
 
 /* Runtime variables */
-GLVar gm_modelview, gm_persp;
+uint32_t gm_modelview, gm_persp;
 mat4 m_persp, m_view, m_model, m_modelview;
 
 float camera_x = 0.0;
@@ -75,7 +76,7 @@ float cube_loc_y = -2.0;
 float cube_loc_z = 0.0;
 
 
-void frame(double time) {
+void display(double time) {
     gm_modelview = get_uniform_var("gm_modelview");
     gm_persp = get_uniform_var("gm_persp");
 
@@ -128,6 +129,8 @@ mat4 _m_ftrn, _m_frot;
 
 void calc_floaty_animation_matrix(double time, mat4 out) {
     float rot_angle = 0.4 * (float) time;
+    // float randnum = (float)rand() / (float)RAND_MAX;
+    // info_log("%f", randnum);
 
     glm_mat4_identity(out);
     glm_mat4_identity(_m_ftrn);
@@ -142,7 +145,7 @@ void calc_floaty_animation_matrix(double time, mat4 out) {
 
     glm_rotate_x(_m_frot, rot_angle, _m_frot);
     glm_rotate_y(_m_frot, rot_angle, _m_frot);
-    glm_rotate_z(_m_frot, rot_angle, _m_frot);
+    // glm_rotate_z(_m_frot, rot_angle, _m_frot);
 
     glm_mat4_mul(_m_ftrn, _m_frot, out);
 }

@@ -2,6 +2,8 @@
 #include <stdbool.h>
 
 
-double update_time();    // call on every frame
-int get_fps();           // get FPS count for last second
-bool second_passed();    // true if 1 second passed, false otherwise
+extern int fps;               // current FPS
+extern bool second_passed;    // simple timer --
+                              //    true if 1 second passed, false otherwise
+
+double update_time();         // call on every frame to fill vars above

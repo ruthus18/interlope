@@ -6,14 +6,13 @@
 
 #include "config.h"
 #include "render.h"
-#include "types.h"
 #include "utils/io.h"
 #include "utils/time.h"
 
 
-ProgramID program;
 GLFWwindow* window;
-double time;
+uint32_t program;
+double time_;
 
 
 void render_init() {
@@ -40,20 +39,19 @@ void render_init() {
 }
 
 
-void render_run(frame_callback_t) {
+void render_display(DISPLAY_CALLBACK_T) {
     while (!glfwWindowShouldClose(window)) {
-        time = update_time();
-
         glClear(GL_DEPTH_BUFFER_BIT);
-        // glClearColor(0.9, 0.9, 0.9, 1.0);
+        // glClearColor(0.1, 0.1, 0.1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(program);
 
-        (*frame_callback)(time);
+        time_ = update_time();
+        (*display_callback)(time_);
 
-        if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed()) {
+        if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed) {
             char title_buf[128];
-            sprintf(title_buf, "%s [%i FPS]", SCREEN_TITLE, get_fps());
+            sprintf(title_buf, "%s [%i FPS]", SCREEN_TITLE, fps);
             glfwSetWindowTitle(window, title_buf);
         }
 
@@ -71,7 +69,6 @@ void render_close() {
 
 void link_gl_program() {
     int link_ok;
-
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
     if (link_ok != 1) {
@@ -81,11 +78,8 @@ void link_gl_program() {
 }
 
 
-ShaderID load_shader(
-    const char* file_path,
-    int shader_type
-) {
-    ShaderID shader = glCreateShader(shader_type);
+uint32_t load_shader(const char* file_path, int shader_type) {
+    uint32_t shader = glCreateShader(shader_type);
     int compile_ok;
 
     const char* path = shader_path(file_path);
@@ -124,6 +118,6 @@ bool check_opengl_error() {
 }
 
 
-GLVar get_uniform_var(const char* var_name) {
+uint32_t get_uniform_var(const char* var_name) {
     return glGetUniformLocation(program, var_name);
 }

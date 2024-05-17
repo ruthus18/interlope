@@ -1,17 +1,16 @@
+#pragma once
 #include <stdbool.h>
 
-#include "types.h"
-
-#define frame_callback_t void (*frame_callback)(double)
-typedef frame_callback_t;
+#define DISPLAY_CALLBACK_T void (*display_callback)(double)
+typedef DISPLAY_CALLBACK_T;
 
 
 void render_init();
-void render_run(frame_callback_t);
+void render_display(DISPLAY_CALLBACK_T);
 void render_close();
 
 void link_gl_program();
-ShaderID load_shader(const char* path, int shader_type);
+uint32_t load_shader(const char* path, int shader_type);
 bool check_opengl_error();
 
-GLVar get_uniform_var(const char* var_name);
+uint32_t get_uniform_var(const char* var_name);

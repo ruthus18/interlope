@@ -7,11 +7,12 @@
 #include "./io.h"
 
 
-double current_time, last_time, delta, timer;
+double current_time, last_time, delta, timer_sec;
 
-bool sec_passed = false;   // mark true on every 1 sec frame
-int nbframes = 0;          // num of frames after recent timer reset
-int fps = 0;               // last record of nbframes
+double current_time = 0.0;       // GetTime value from GLFW
+int nbframes = 0;                // num of frames after recent timer reset
+int fps = 0;                     // last record of nbframes
+bool second_passed = false;      // mark true on every 1 sec frame (timer)
 
 
 double update_time() {
@@ -21,24 +22,20 @@ double update_time() {
     delta = current_time - last_time;
     nbframes++;
 
-    timer += delta;
+    timer_sec += delta;
 
     /* Update vars and reset after 1.0 sec */
-    if (timer >= 1.0) {
-        sec_passed = true; 
+    if (timer_sec >= 1.0) {
+        second_passed = true; 
         fps = nbframes;
         nbframes = 0;
-        timer = 0.0;
+        timer_sec = 0.0;
     }
-    else sec_passed = false;
+    else second_passed = false;
 
     if (__DEBUG__PRINT_TIME_UPDATE)  info_log(
-        "t_now=%f  t_last=%f  t_delta=%f  timer=%f",
-        current_time, last_time, delta, timer
+        "t_now=%f\tt_last=%f\tt_delta=%f\tt_timer[1s]=%f",
+        current_time, last_time, delta, timer_sec
     );
     return current_time;
 }
-
-int get_fps() { return fps; }
-
-bool second_passed() { return sec_passed; }
