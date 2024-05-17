@@ -6,17 +6,21 @@
 
 #include "config.h"
 #include "render.h"
-#include "utils/io.h"
+#include "logging.h"
 
+#define NUM_VAO 1    // max num of Vertex Array Objects
+#define NUM_VBO 2    // max num of Vertex Buffer Objects
 
 static uint32_t vao[NUM_VAO];  // Vertex Array Objects
 static uint32_t vbo[NUM_VBO];  // Vertex Buffer Objects
 
-void init_cube_mesh();
+void init_input();
+void init_meshes();
 void display(double delta);
 void calc_persp_matrix(mat4 out);
 void calc_view_matrix(mat4 out);
-void calc_model_matrix(mat4 out);
+void calc_cube_matrix(mat4 out);
+void calc_pyramid_matrix(mat4 out);
 void calc_floaty_animation_matrix(double time, mat4 out);
 
 
@@ -28,7 +32,8 @@ int main() {
     load_shader("cube.frag", GL_FRAGMENT_SHADER);
     link_gl_program();
 
-    init_cube_mesh();
+    init_input();
+    init_meshes();
     srand(time(NULL));  // set random generator
 
     render_display(&display);
@@ -37,8 +42,14 @@ int main() {
 }
 
 
-void init_cube_mesh() {
-    float cube_vertices[108] = {
+void init_input() {
+    /* Mouse setup */
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);    
+}
+
+
+void init_meshes() {
+    float cube_verts[108] = {
         -1.0,  1.0, -1.0,    -1.0, -1.0, -1.0,     1.0, -1.0, -1.0,
          1.0, -1.0, -1.0,     1.0,  1.0, -1.0,    -1.0,  1.0, -1.0,
          1.0, -1.0, -1.0,     1.0, -1.0,  1.0,     1.0,  1.0, -1.0,
@@ -52,18 +63,31 @@ void init_cube_mesh() {
         -1.0,  1.0, -1.0,     1.0,  1.0, -1.0,     1.0,  1.0,  1.0,
          1.0,  1.0,  1.0,    -1.0,  1.0,  1.0,    -1.0,  1.0, -1.0
     };
+    float pyramid_verts[54] = {
+        -1.0, -1.0,  1.0,     1.0, -1.0,  1.0,     0.0,  1.0,  0.0,
+         1.0, -1.0,  1.0,     1.0, -1.0, -1.0,     0.0,  1.0,  0.0,
+         1.0, -1.0, -1.0,    -1.0, -1.0, -1.0,     0.0,  1.0,  0.0,
+        -1.0, -1.0, -1.0,    -1.0, -1.0,  1.0,     0.0,  1.0,  0.0,
+        -1.0, -1.0, -1.0,     1.0, -1.0,  1.0,    -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0,    -1.0, -1.0, -1.0,     1.0, -1.0, -1.0
+    };
+
     glGenVertexArrays(1, vao);
     glBindVertexArray(vao[0]);
     glGenBuffers(NUM_VBO, vbo);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(
-        GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW
+        GL_ARRAY_BUFFER, sizeof(cube_verts), cube_verts, GL_STATIC_DRAW
+    );
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(pyramid_verts), pyramid_verts, GL_STATIC_DRAW
     );
 }
 
+/* ====== Main Loop ====== */
 
-/* Runtime variables */
 uint32_t gm_modelview, gm_persp;
 mat4 m_persp, m_view, m_model, m_modelview;
 
@@ -71,37 +95,65 @@ float camera_x = 0.0;
 float camera_y = 0.0;
 float camera_z = 8.0;
 
-float cube_loc_x = 0.0;
-float cube_loc_y = -2.0;
-float cube_loc_z = 0.0;
+float cube_loc_x =  2.0;
+float cube_loc_y =  0.0;
+float cube_loc_z =  0.0;
+
+float pyr_loc_x =  -2.0;
+float pyr_loc_y =   0.0;
+float pyr_loc_z =   0.0;
+
+
+double mouse_x;
+double mouse_y;
 
 
 void display(double time) {
+
+    glfwGetCursorPos(window, &mouse_x, &mouse_y);
+    info_log("x=%f\ty=%f", mouse_x, mouse_y);
+
+
     gm_modelview = get_uniform_var("gm_modelview");
     gm_persp = get_uniform_var("gm_persp");
 
-    calc_persp_matrix(m_persp);
-    calc_view_matrix(m_view);
-    // calc_model_matrix();  // Animation instead
+    calc_persp_matrix(m_persp);  // <- camera FOV
+    calc_view_matrix(m_view);    // <- camera position
 
-    calc_floaty_animation_matrix(time, m_model);
-    
-    // model-view matrix
+    /* Cube draw  ( buffer 0 ) */
+    calc_cube_matrix(m_model);
     glm_mat4_mul(m_view, m_model, m_modelview);
 
-    // copy Persp. and MV matrices to shader vars
     glUniformMatrix4fv(gm_modelview, 1, GL_FALSE, (float*)m_modelview);
     glUniformMatrix4fv(gm_persp, 1, GL_FALSE, (float*)m_persp);
 
-    // associate VBO with vertex attr in v-shader
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    // adjust OpenGL settings and draw model
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    /* Pyramid draw  ( buffer[1] ) */
+    calc_pyramid_matrix(m_model);
+    glm_mat4_mul(m_view, m_model, m_modelview);
+
+    glUniformMatrix4fv(gm_modelview, 1, GL_FALSE, (float*)m_modelview);
+    glUniformMatrix4fv(gm_persp, 1, GL_FALSE, (float*)m_persp);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+}
+
+
+void mouse_get_cursor_pos(window_t window, double* xpos, double* ypos) {
+    
 }
 
 
@@ -118,8 +170,15 @@ void calc_view_matrix(mat4 out) {
 }
 
 
-void calc_model_matrix(mat4 out) {
+void calc_cube_matrix(mat4 out) {
     vec3 model_vec = {cube_loc_x, cube_loc_y, cube_loc_z};
+    glm_mat4_identity(out);
+    glm_translate(out, model_vec);
+}
+
+
+void calc_pyramid_matrix(mat4 out) {
+    vec3 model_vec = {pyr_loc_x, pyr_loc_y, pyr_loc_z};
     glm_mat4_identity(out);
     glm_translate(out, model_vec);
 }
@@ -145,7 +204,7 @@ void calc_floaty_animation_matrix(double time, mat4 out) {
 
     glm_rotate_x(_m_frot, rot_angle, _m_frot);
     glm_rotate_y(_m_frot, rot_angle, _m_frot);
-    // glm_rotate_z(_m_frot, rot_angle, _m_frot);
+    glm_rotate_z(_m_frot, rot_angle, _m_frot);
 
     glm_mat4_mul(_m_ftrn, _m_frot, out);
 }

@@ -2,9 +2,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../config.h"
-#include "./time.h"
-#include "./io.h"
+#include "config.h"
+#include "logging.h"
+#include "time.h"
 
 
 double current_time, last_time, delta, timer_sec;
@@ -31,7 +31,7 @@ double update_time() {
         nbframes = 0;
         timer_sec = 0.0;
     }
-    else second_passed = false;
+    else if (second_passed) second_passed = false;
 
     if (__DEBUG__PRINT_TIME_UPDATE)  info_log(
         "t_now=%f\tt_last=%f\tt_delta=%f\tt_timer[1s]=%f",

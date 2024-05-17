@@ -1,9 +1,15 @@
 #pragma once
 #include <stdbool.h>
+#include <GLFW/glfw3.h>
+
 
 #define DISPLAY_CALLBACK_T void (*display_callback)(double)
 typedef DISPLAY_CALLBACK_T;
 
+typedef GLFWwindow* window_t;
+
+
+extern window_t window;
 
 void render_init();
 void render_display(DISPLAY_CALLBACK_T);

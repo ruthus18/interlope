@@ -1,14 +1,16 @@
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "../config.h"
-#include "io.h"
+#include "config.h"
+#include "logging.h"
 
+
+/* =====  Output  ===== */
 
 void greeting_log(const char* msg, ...) {
     fprintf(stdout, "%s", TERM_CYAN_BG);
@@ -97,33 +99,4 @@ void program_log(uint32_t program) {
         info_log("Program log: %s", log);
         free(log);
     }
-}
-
-
-char* shader_path(const char* file_path) {
-    char* path = malloc(strlen(SHADERS_DIR) + strlen(file_path) + 1);
-    strcpy(path, SHADERS_DIR);
-    strcat(path, file_path);
-    return path;
-}
-
-
-char* load_file(const char* path) {
-    char* buffer = 0;
-    long len;
-    FILE * file = fopen(path, "rb");
-
-    if (file) {
-        fseek(file, 0, SEEK_END);
-        len = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        buffer = (char*) malloc((len+1) * sizeof(char));
-        if (buffer)
-            fread(buffer, sizeof(char), len, file);
-        
-        fclose(file);
-    }
-    buffer[len] = '\0';
-    return buffer;
 }

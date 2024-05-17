@@ -5,14 +5,14 @@
 #include <GLFW/glfw3.h>
 
 #include "config.h"
+#include "file.h"
+#include "logging.h"
 #include "render.h"
-#include "utils/io.h"
-#include "utils/time.h"
+#include "time.h"
 
 
-GLFWwindow* window;
+window_t window;
 uint32_t program;
-
 static double time_;
 
 
