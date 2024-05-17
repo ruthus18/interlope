@@ -12,7 +12,8 @@
 
 GLFWwindow* window;
 uint32_t program;
-double time_;
+
+static double time_;
 
 
 void render_init() {

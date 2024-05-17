@@ -9,8 +9,8 @@
 #include "utils/io.h"
 
 
-GLuint vao[NUM_VAO];
-GLuint vbo[NUM_VBO];
+static uint32_t vao[NUM_VAO];  // Vertex Array Objects
+static uint32_t vbo[NUM_VBO];  // Vertex Buffer Objects
 
 void init_cube_mesh();
 void display(double delta);
