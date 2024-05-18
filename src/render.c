@@ -40,7 +40,7 @@ void render_init() {
 }
 
 
-void render_display(DISPLAY_CALLBACK_T) {
+void render_update(DISPLAY_CALLBACK_T) {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_DEPTH_BUFFER_BIT);
         // glClearColor(0.1, 0.1, 0.1, 1.0);

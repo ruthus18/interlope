@@ -12,7 +12,7 @@ typedef GLFWwindow* window_t;
 extern window_t window;
 
 void render_init();
-void render_display(DISPLAY_CALLBACK_T);
+void render_update(DISPLAY_CALLBACK_T);
 void render_close();
 
 void link_gl_program();

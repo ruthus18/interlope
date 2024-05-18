@@ -5,6 +5,7 @@
 #include <cglm/cglm.h>
 
 #include "config.h"
+#include "input.h"
 #include "render.h"
 #include "logging.h"
 
@@ -14,9 +15,11 @@
 static uint32_t vao[NUM_VAO];  // Vertex Array Objects
 static uint32_t vbo[NUM_VBO];  // Vertex Buffer Objects
 
-void init_input();
+void update(double dt);
+
 void init_meshes();
-void display(double delta);
+void draw_meshes();
+
 void calc_persp_matrix(mat4 out);
 void calc_view_matrix(mat4 out);
 void calc_cube_matrix(mat4 out);
@@ -36,15 +39,19 @@ int main() {
     init_meshes();
     srand(time(NULL));  // set random generator
 
-    render_display(&display);
+    render_update(&update);
     render_close();
     return EXIT_SUCCESS;
 }
 
 
-void init_input() {
-    /* Mouse setup */
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);    
+void update(double time) {
+    update_input();
+    draw_meshes();
+
+    info_log(
+        "t=%f\tΔmouse_x=%f\tΔmouse_y=%f", time, mouse_delta_x, mouse_delta_y
+    );
 }
 
 
@@ -86,7 +93,6 @@ void init_meshes() {
     );
 }
 
-/* ====== Main Loop ====== */
 
 uint32_t gm_modelview, gm_persp;
 mat4 m_persp, m_view, m_model, m_modelview;
@@ -104,16 +110,7 @@ float pyr_loc_y =   0.0;
 float pyr_loc_z =   0.0;
 
 
-double mouse_x;
-double mouse_y;
-
-
-void display(double time) {
-
-    glfwGetCursorPos(window, &mouse_x, &mouse_y);
-    info_log("x=%f\ty=%f", mouse_x, mouse_y);
-
-
+void draw_meshes() {
     gm_modelview = get_uniform_var("gm_modelview");
     gm_persp = get_uniform_var("gm_persp");
 
@@ -149,11 +146,6 @@ void display(double time) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glDrawArrays(GL_TRIANGLES, 0, 18);
-}
-
-
-void mouse_get_cursor_pos(window_t window, double* xpos, double* ypos) {
-    
 }
 
 

@@ -10,8 +10,6 @@
 #include "logging.h"
 
 
-/* =====  Output  ===== */
-
 void greeting_log(const char* msg, ...) {
     fprintf(stdout, "%s", TERM_CYAN_BG);
 
