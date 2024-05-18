@@ -11,6 +11,7 @@ all:
 		-o ${BUILD}/interlope\
 			${SRC}/main.c \
 			${SRC}/file.c \
+			${SRC}/input.c \
 			${SRC}/logging.c \
 			${SRC}/render.c \
 			${SRC}/time.c \
