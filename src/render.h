@@ -13,10 +13,11 @@ extern window_t window;
 
 void render_init();
 void render_update(DISPLAY_CALLBACK_T);
-void render_close();
+bool render_check_stop();
+void render_stop();
+void render_destroy();
+void render_link_program();
+uint32_t render_load_shader(const char* path, int shader_type);
+bool render_check_error();
 
-void link_gl_program();
-uint32_t load_shader(const char* path, int shader_type);
-bool check_opengl_error();
-
-uint32_t get_uniform_var(const char* var_name);
+uint32_t render_get_uniform_var(const char* var_name);

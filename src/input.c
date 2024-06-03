@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdlib.h>
 #include <GLFW/glfw3.h>
 
 #include "input.h"
@@ -21,11 +22,16 @@ void init_input() {
 
 
 void update_input() {
+    /* Mouse */
     glfwGetCursorPos(window, &mouse_x, &mouse_y);
     
     mouse_delta_x = (mouse_x - mouse_last_x) / SCREEN_WIDTH;
     mouse_delta_y = (mouse_y - mouse_last_y) / SCREEN_HEIGHT;
-
     mouse_last_x = mouse_x;
     mouse_last_y = mouse_y;
+
+    /* Keyboard */
+    glfwPollEvents();
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        render_stop();
 }

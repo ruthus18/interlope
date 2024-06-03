@@ -11,6 +11,7 @@
 #include "time.h"
 
 
+bool should_stop = false;
 window_t window;
 uint32_t program;
 static double time_;
@@ -41,34 +42,38 @@ void render_init() {
 
 
 void render_update(DISPLAY_CALLBACK_T) {
-    while (!glfwWindowShouldClose(window)) {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        // glClearColor(0.1, 0.1, 0.1, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(program);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(program);
 
-        time_ = update_time();
-        (*display_callback)(time_);
+    time_ = update_time();
+    (*display_callback)(time_);
 
-        if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed) {
-            char title_buf[128];
-            sprintf(title_buf, "%s [%i FPS]", SCREEN_TITLE, fps);
-            glfwSetWindowTitle(window, title_buf);
-        }
-
-        glfwSwapBuffers(window);  // Draw content, VSync
-        glfwPollEvents();         // Handle window-related events (kb, mouse...) 
+    if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed) {
+        char title_buf[128];
+        sprintf(title_buf, "%s [%i FPS]", SCREEN_TITLE, fps);
+        glfwSetWindowTitle(window, title_buf);
     }
+    glfwSwapBuffers(window);  // Draw content, VSync
 }
 
 
-void render_close() {
+bool render_check_stop() {
+    return glfwWindowShouldClose(window) || should_stop;
+}
+
+
+void render_stop() { should_stop = true; }
+
+
+void render_destroy() {
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
 
-void link_gl_program() {
+void render_link_program() {
     int link_ok;
     glLinkProgram(program);
     glGetProgramiv(program, GL_LINK_STATUS, &link_ok);
@@ -79,7 +84,7 @@ void link_gl_program() {
 }
 
 
-uint32_t load_shader(const char* file_path, int shader_type) {
+uint32_t render_load_shader(const char* file_path, int shader_type) {
     uint32_t shader = glCreateShader(shader_type);
     int compile_ok;
 
@@ -91,7 +96,7 @@ uint32_t load_shader(const char* file_path, int shader_type) {
     free((void*) file_buffer);
 
     glCompileShader(shader);
-    check_opengl_error();
+    render_check_error();
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_ok);
 
     if (compile_ok == 1) {
@@ -107,7 +112,7 @@ uint32_t load_shader(const char* file_path, int shader_type) {
 }
 
 
-bool check_opengl_error() {
+bool render_check_error() {
     bool is_err = false;
     int gl_err = glGetError();
 
@@ -119,6 +124,6 @@ bool check_opengl_error() {
 }
 
 
-uint32_t get_uniform_var(const char* var_name) {
+uint32_t render_get_uniform_var(const char* var_name) {
     return glGetUniformLocation(program, var_name);
 }

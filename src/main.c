@@ -31,16 +31,18 @@ int main() {
     render_init();
     print_engine_info();
 
-    load_shader("cube.vert", GL_VERTEX_SHADER);
-    load_shader("cube.frag", GL_FRAGMENT_SHADER);
-    link_gl_program();
+    render_load_shader("cube.vert", GL_VERTEX_SHADER);
+    render_load_shader("cube.frag", GL_FRAGMENT_SHADER);
+    render_link_program();
 
     init_input();
     init_meshes();
     srand(time(NULL));  // set random generator
 
-    render_update(&update);
-    render_close();
+    while (!render_check_stop()) {
+        render_update(&update);
+    }
+    render_destroy();
     return EXIT_SUCCESS;
 }
 
@@ -111,8 +113,8 @@ float pyr_loc_z =   0.0;
 
 
 void draw_meshes() {
-    gm_modelview = get_uniform_var("gm_modelview");
-    gm_persp = get_uniform_var("gm_persp");
+    gm_modelview = render_get_uniform_var("gm_modelview");
+    gm_persp = render_get_uniform_var("gm_persp");
 
     calc_persp_matrix(m_persp);  // <- camera FOV
     calc_view_matrix(m_view);    // <- camera position
