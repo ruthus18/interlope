@@ -11,13 +11,13 @@ all:
 		-o ${BUILD}/interlope\
 			${SRC}/main.c \
 			\
-			${SRC}/system/file.c \
-			${SRC}/system/logging.c \
-			\
 			${SRC}/engine/render.c \
 			${SRC}/engine/time.c \
 			${SRC}/engine/input.c \
 			${SRC}/engine/camera.c \
+			\
+			${SRC}/system/file.c \
+			${SRC}/system/logging.c \
 
 	rm -rf ${BUILD}/shaders *.o ${SRC}/main
 	cp -r ${SRC}/shaders ${BUILD}/shaders

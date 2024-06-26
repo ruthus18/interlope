@@ -1,0 +1,22 @@
+ENGINE/CAMERA
+    * implement math operations (more like c = vec_cross(a, b))
+    * mouse sens to config
+
+
+ENGINE/INPUT
+    * key to action binding
+        [+] void input_register_action(int action, int key)
+        [+] bool input_is_action_key_pressed(int action)
+    
+    * hide GLFW internals
+        [+] #define KEY_ESC GLFW_KEY_ESCAPE
+
+
+ENGINE/RENDER
+    * reshape window callback support
+
+
+-> ENGINE/SCENE
+-> SYSTEM/MATH
+-> SYSTEM/RW_GLTF
+-> SYSTEM/RW_TOML

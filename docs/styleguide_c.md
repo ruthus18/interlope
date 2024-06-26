@@ -15,11 +15,29 @@ uint32_t vbo[NUM_VBO];  // Vertex Buffer Objects
 
 
 /* =====  Main Loop  ===== */
-void init_input();  // set up kb and mouse
+void input_init();  // set up kb and mouse
 
 /* check kb and mouse, update runtime vars (on every frame) */
 //
-void update_input() {
+void input_update() {
     ...
 }
+```
+
+
+### Module interface
+
+* use namespace prefix for callable: `{namespace}_{function}`
+
+**Example:**
+
+`render.h`:
+```c
+void render_init();
+
+uint32_t render_load_shader(const char* path, int shader_type);
+uint32_t render_get_uniform_var(const char* var_name);
+
+bool render_check_stop();
+bool render_check_error();
 ```

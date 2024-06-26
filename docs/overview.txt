@@ -1,14 +1,13 @@
 Engine modules:
+    * camera
+    * input
     * render
     * time
-    * input
-    * camera
 
     - provides interface to application logic
 
 System modules:
-    * main
-    * config
+    * file
     * logging
 
-    - application logic, configuration, development tools, etc
+    - low-level logic (input/file import/export) and utils
