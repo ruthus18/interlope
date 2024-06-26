@@ -4,11 +4,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "config.h"
-#include "file.h"
-#include "logging.h"
 #include "render.h"
-#include "time.h"
+
+#include "../config.h"
+#include "../system/logging.h"
+#include "../system/file.h"
+#include "./time.h"
 
 
 bool should_stop = false;

@@ -1,0 +1,14 @@
+Engine modules:
+    * render
+    * time
+    * input
+    * camera
+
+    - provides interface to application logic
+
+System modules:
+    * main
+    * config
+    * logging
+
+    - application logic, configuration, development tools, etc

@@ -5,10 +5,10 @@
 #include <cglm/cglm.h>
 
 #include "config.h"
-#include "input.h"
-#include "render.h"
-#include "logging.h"
-#include "time.h"
+#include "system/logging.h"
+#include "engine/input.h"
+#include "engine/render.h"
+#include "engine/time.h"
 
 #define NUM_VAO 1    // max num of Vertex Array Objects
 #define NUM_VBO 3    // max num of Vertex Buffer Objects

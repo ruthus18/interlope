@@ -10,11 +10,14 @@ all:
 		-lm -lGL -lGLEW \
 		-o ${BUILD}/interlope\
 			${SRC}/main.c \
-			${SRC}/file.c \
-			${SRC}/input.c \
-			${SRC}/logging.c \
-			${SRC}/render.c \
-			${SRC}/time.c \
+			\
+			${SRC}/system/file.c \
+			${SRC}/system/logging.c \
+			\
+			${SRC}/engine/render.c \
+			${SRC}/engine/time.c \
+			${SRC}/engine/input.c \
+			${SRC}/engine/camera.c \
 
 	rm -rf ${BUILD}/shaders *.o ${SRC}/main
 	cp -r ${SRC}/shaders ${BUILD}/shaders

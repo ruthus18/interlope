@@ -2,9 +2,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "config.h"
-#include "logging.h"
 #include "time.h"
+
+#include "../config.h"
+#include "../system/logging.h"
 
 
 double current_time, last_time, dt, timer_sec;

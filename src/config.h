@@ -6,8 +6,8 @@
 
 #define ENGINE_VERSION "0.0.1"
 
-#define SCREEN_WIDTH   1366
-#define SCREEN_HEIGHT  768
+#define SCREEN_WIDTH   1920
+#define SCREEN_HEIGHT  1080
 #define SCREEN_ASPECT  (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT
 #define SCREEN_TITLE   "Interlope Engine"
 

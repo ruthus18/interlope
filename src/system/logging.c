@@ -6,8 +6,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "config.h"
 #include "logging.h"
+
+#include "../config.h"
 
 
 void greeting_log(const char* msg, ...) {

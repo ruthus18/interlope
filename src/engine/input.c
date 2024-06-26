@@ -4,9 +4,10 @@
 
 #include "input.h"
 
-#include "config.h"
-#include "logging.h"
-#include "render.h"
+#include "../config.h"
+#include "../system/logging.h"
+
+#include "./render.h"
 
 
 double mouse_x, mouse_y, mouse_last_x, mouse_last_y, mouse_delta_x, mouse_delta_y;
