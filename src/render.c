@@ -14,7 +14,6 @@
 bool should_stop = false;
 window_t window;
 uint32_t program;
-static double time_;
 
 
 void render_init() {
@@ -47,8 +46,10 @@ void render_update(DISPLAY_CALLBACK_T) {
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(program);
 
-    time_ = update_time();
-    (*display_callback)(time_);
+    glEnable(GL_CULL_FACE);
+
+    time_update();
+    (*display_callback)();
 
     if (__DEBUG__SHOW_FPS_IN_TITLE && second_passed) {
         char title_buf[128];

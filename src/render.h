@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 
-#define DISPLAY_CALLBACK_T void (*display_callback)(double)
+#define DISPLAY_CALLBACK_T void (*display_callback)()
 typedef DISPLAY_CALLBACK_T;
 
 typedef GLFWwindow* window_t;

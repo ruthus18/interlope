@@ -1,4 +1,10 @@
+#include <stdbool.h>
+
 extern double mouse_x, mouse_y, mouse_delta_x, mouse_delta_y;  // readonly
 
-void init_input();
-void update_input();
+void input_init();
+bool input_is_kb_key_pressed(int key);
+
+void input_update_keyboard();
+void input_update_mouse();
+
