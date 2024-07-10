@@ -32,6 +32,11 @@ bool input_is_kb_key_pressed(int key) {
 }
 
 
+bool input_is_mouse_key_pressed(int key) {
+    return (glfwGetMouseButton(window, key) == GLFW_PRESS);
+}
+
+
 void input_update_keyboard() {
     glfwPollEvents();
 

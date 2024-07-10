@@ -28,6 +28,9 @@ fn on_update() {
         if input::is_kb_key_pressed(Key::ENTER) {
             println!("Key pressed: ENTER");
         }
+        if input::is_mouse_key_pressed(Key::LMB) {
+            println!("Key pressed: LMB");
+        }
         
         if time::get_timer() {
             println!("Current Time: {}", time::current_time);

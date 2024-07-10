@@ -17,6 +17,7 @@ pub mod _api {
         pub fn input_update_keyboard();
         pub fn input_update_mouse();
         pub fn input_is_kb_key_pressed(key: c_int) -> bool;
+        pub fn input_is_mouse_key_pressed(key: c_int) -> bool;
 
         // LOGGING
         //
@@ -49,6 +50,9 @@ pub enum ShaderType {
 
 #[allow(dead_code)]
 pub enum Key {
+    LMB = 0,
+    RMB = 1,
+
     ESC = 256,
     ENTER = 257,
     RIGHT = 262,
@@ -74,6 +78,10 @@ pub mod input {
 
     pub fn is_kb_key_pressed(key: Key) -> bool {
         unsafe { return _api::input_is_kb_key_pressed(key as c_int); }
+    }
+
+    pub fn is_mouse_key_pressed(key: Key) -> bool {
+        unsafe { return _api::input_is_mouse_key_pressed(key as c_int); }
     }
 }
 
