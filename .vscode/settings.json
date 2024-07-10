@@ -3,6 +3,16 @@
         "interlope/vendor/include",
     ],
     "files.associations": {
-        "glfw3.h": "c"
+        "glfw3.h": "c",
+        "bit": "c",
+        "cmath": "c",
+        "compare": "c",
+        "concepts": "c",
+        "cstddef": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "*.tcc": "c",
+        "typeinfo": "c",
+        "stdlib.h": "c"
     }
 }
