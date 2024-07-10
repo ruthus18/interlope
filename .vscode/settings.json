@@ -1,5 +1,8 @@
 {
     "C_Cpp.default.includePath": [
-        "engine/include",
-    ]
+        "interlope/vendor/include",
+    ],
+    "files.associations": {
+        "glfw3.h": "c"
+    }
 }

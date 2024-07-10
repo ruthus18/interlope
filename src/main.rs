@@ -1,14 +1,12 @@
-extern crate core;
-use core::ffi::c_int;
-
-extern "C" {
-    fn multiply(a: c_int, b: c_int) -> c_int;
-}
+mod engine;
+use engine::api::{window_init, window_update};
 
 
 fn main() {
     println!("[R] Start Rust App!");
-    unsafe { 
-        println!("[R] Result: {}", multiply(14, 14));
+    unsafe { window_init() };
+    loop {
+        unsafe { window_update() };
     }
+    // unsafe { engine::_api::window_destroy() };
 }
