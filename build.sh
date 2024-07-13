@@ -37,10 +37,6 @@ ar rcs ${BUILD_DIR}/libinterlope.a \
     ${BUILD_DIR}/time.o \
 
 printf "\033[0;32m-> [3/4] Compiling Rust sources\033[0;0m\n"
-rustc -o ${BUILD_DIR}/interlope \
-    -L ${BUILD_DIR} -l interlope \
-    -L ${VENDOR_DIR} -l GL -l GLEW -l cglm -l glfw \
-    \
-    ${SRC_RS}/main.rs
+cargo build
 
 printf "\033[0;32m-> [4/4] Done compiling\033[0;0m\n"
